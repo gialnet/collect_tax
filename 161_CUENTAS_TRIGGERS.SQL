@@ -1,0 +1,156 @@
+-- -----------------------------------------------------
+-- Euro. Revisado el 5-12-2001. Lucas Fernández Pérez 
+-- No se han realizado cambios.
+-- -----------------------------------------------------
+CREATE OR REPLACE TRIGGER T_INS_LOTESCUENTAS
+BEFORE INSERT ON HEAD_LOTES_CUENTAS
+FOR EACH ROW
+DECLARE
+xNUMERO 	INTEGER DEFAULT 0;
+BEGIN
+
+	/*AUMENTAR EL CONTADOR DE LOTES*/
+	SELECT GENEHEADL.NEXTVAL INTO xNUMERO FROM DUAL;
+
+	/* CONCATENA EL AÑO Y EL NUMERO RELLENO DE CEROS*/
+	:NEW.LOTE:=DAME_NUMEROS(TO_CHAR(SYSDATE,'YYYY'), xNUMERO);
+
+END T_INS_LOTESCUENTAS;
+/
+
+/********************************************************************************************/
+
+CREATE OR REPLACE TRIGGER T_INS_CULOTE
+BEFORE INSERT ON CUENTAS_LOTES
+
+FOR EACH ROW
+
+WHEN (NEW.ID IS NULL)
+
+BEGIN
+
+   SELECT GENECULOTE.NEXTVAL INTO :NEW.ID FROM DUAL;
+
+END T_INS_CULOTE;
+/
+
+/********************************************************************************************/
+CREATE OR REPLACE TRIGGER T_CUANTAS_DILIGENCIAS
+BEFORE UPDATE OF DILIGENCIA
+	ON CUENTAS_LOTES
+FOR EACH ROW
+BEGIN
+
+	IF :OLD.DILIGENCIA='N' AND :NEW.DILIGENCIA='S' THEN
+
+		:NEW.VECES:=:NEW.VECES+1;
+
+		UPDATE CUENTAS_CORRIENTES SET VECES=VECES+1
+			WHERE ENTIDAD=:NEW.ENTIDAD
+			AND OFICINA=:NEW.Oficina
+			AND DC=:NEW.DC
+			AND CUENTA=:NEW.Cuenta;
+	END IF;
+
+END T_CUANTAS_DILIGENCIAS;
+/
+
+/********************************************************************************************/
+CREATE OR REPLACE TRIGGER T_ULTIMA_RETENCION
+BEFORE UPDATE OF FECHA_RETENCION
+	ON CUENTAS_LOTES
+FOR EACH ROW
+BEGIN
+
+	IF :NEW.FECHA_RETENCION IS NOT NULL THEN
+
+		UPDATE CUENTAS_CORRIENTES SET FECHA_LAST_RETE=:NEW.FECHA_RETENCION
+			WHERE ENTIDAD=:NEW.ENTIDAD
+			AND OFICINA=:NEW.Oficina
+			AND DC=:NEW.DC
+			AND CUENTA=:NEW.Cuenta;
+	END IF;
+
+END T_ULTIMA_RETENCION;
+/
+
+
+/********************************************************************************************/
+
+CREATE OR REPLACE TRIGGER T_INS_CUCO
+BEFORE INSERT ON CUENTAS_CORRIENTES
+FOR EACH ROW
+
+BEGIN
+
+   SELECT GENERCUCO.NEXTVAL INTO :NEW.ID FROM DUAL;
+
+END T_INS_CUCO;
+/
+
+/*******************************************************************************/
+
+CREATE OR REPLACE TRIGGER T_CHNG_CUENTAS_CORRIENTES
+BEFORE UPDATE OF ENTIDAD,OFICINA,DC,CUENTA,CLAVE_SEGURIDAD
+	ON CUENTAS_CORRIENTES
+
+FOR EACH ROW
+
+BEGIN
+
+UPDATE CUENTAS_LOTES SET ENTIDAD=:NEW.ENTIDAD,
+                                   OFICINA=:NEW.Oficina,
+                                   DC=:NEW.DC,
+  					     CUENTA=:NEW.Cuenta,
+ 			                 CLAVE_SEGURIDAD=:NEW.CLAVE_SEGURIDAD
+	WHERE ENTIDAD=:OLD.ENTIDAD
+	AND OFICINA=:OLD.Oficina
+	AND DC=:OLD.DC
+	AND CUENTA=:OLD.Cuenta;
+
+END T_CHNG_CUENTAS_CORRIENTES;
+/
+
+/*******************************************************************************/
+
+CREATE OR REPLACE TRIGGER T_INS_NEXT_LEVANTA
+BEFORE INSERT ON NEXT_LEVANTA_CUENTAS
+FOR EACH ROW
+BEGIN
+   SELECT GENNEXTLEVANTA.NEXTVAL INTO :NEW.ID FROM DUAL;   
+END;
+/
+
+/*******************************************************************************/
+
+/* problema de tabla mutante con este trigger */
+
+/* sólo sirve para lanzar unmensaje al expediente
+CREATE OR REPLACE TRIGGER T_CHNG_CUENTAS_LOTES
+BEFORE UPDATE OF ENTIDAD,OFICINA,DC,CUENTA,CLAVE_SEGURIDAD
+	ON CUENTAS_LOTES
+
+FOR EACH ROW
+
+DECLARE 
+
+xIDCuenta INT;
+xFASE INT;
+
+BEGIN
+
+xFASE:=FASE_TramiteCuentas(:NEW.ID);
+
+IF xFASE=2 THEN --Diligencia de embargo emitida al banco
+   UPDATE EXPEDIENTES SET AVISO='100',F_AVISO=SYSDATE
+	WHERE ID=:NEW.IDEXPE;
+END IF;
+
+IF xFASE=3 THEN --Retencion de importes
+   UPDATE EXPEDIENTES SET AVISO='110',F_AVISO=SYSDATE
+	WHERE ID=:NEW.IDEXPE;
+END IF;
+
+END T_CHNG_CUENTAS_LOTES;
+/
+************************************************* */

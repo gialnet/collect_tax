@@ -1,0 +1,113 @@
+--
+--
+--
+CREATE OR REPLACE PROCEDURE CHG_ORDEN_INGRESOS
+AS
+
+CURSOR cINGRESOS IS SELECT * FROM INGRESOS
+	WHERE ORGANISMO_EXT='R'
+	ORDER BY VALOR,F_COBRO_BANCO
+	FOR UPDATE OF PRINCIPAL,RECARGO,COSTAS,DEMORA;
+
+CURSOR cINGREVAL IS SELECT DISTINCT VALOR FROM INGRESOS
+	WHERE ORGANISMO_EXT='R'
+
+xImporteEntrega Float;
+xIDValor Integer default 0;
+xPRINCIPAL float;
+xRECARGO float;
+xCOSTAS float;
+xDEMORA float;
+xPRINCIPAL_NEW float;
+xRECARGO_NEW float;
+xCOSTAS_NEW float;
+xDEMORA_NEW float;
+
+
+BEGIN
+
+
+FOR v_cINGRESOS IN cINGRESOS LOOP
+
+	IF xIDValor <> v_cINGRESOS.VALOR THEN
+
+		SELECT PRINCIPAL,RECARGO,COSTAS,DEMORA_PENDIENTE 
+			INTO xPRINCIPAL,xRECARGO,xCOSTAS,xDEMORA
+			FROM VALORES 
+			WHERE ID=v_cINGRESOS.VALOR;
+
+		xIDValor := v_cINGRESOS.VALOR;
+
+		xPRINCIPAL_NEW:=0;
+		xRECARGO_NEW:=0;
+		xCOSTAS_NEW:=0;
+		xDEMORA_NEW:=0;
+
+	END IF;
+
+	xImporteEntrega := v_cINGRESOS.PRINCIPAL + v_cINGRESOS.RECARGO + 
+						v_cINGRESOS.COSTAS + v_cINGRESOS.DEMORA;
+
+
+      IF xImporteEntrega >= xPRINCIPAL THEN
+		xImporteEntrega := xImporteEntrega - xPRINCIPAL;
+		xPRINCIPAL_NEW:=xPRINCIPAL;
+		xPRINCIPAL:=0;
+	ELSE
+		xPRINCIPAL_NEW:=xImporteEntrega;
+		xPRINCIPAL:=xPRINCIPAL - xImporteEntrega;
+		xImporteEntrega:=0;
+	END IF;
+
+      IF xImporteEntrega >= xRECARGO THEN
+		xImporteEntrega := xImporteEntrega - xRECARGO;
+		xRECARGO_NEW:=xRECARGO;
+		xRECARGO:=0;
+	ELSE
+		xRECARGO_NEW:=xImporteEntrega;
+		xRECARGO:=xRECARGO - xImporteEntrega;
+		xImporteEntrega:=0;
+	END IF;
+
+      IF xImporteEntrega >= xDEMORA THEN
+		xImporteEntrega := xImporteEntrega - xDEMORA;
+		xDEMORA_NEW:=xDEMORA;
+		xDEMORA:=0;
+	ELSE
+		xDEMORA_NEW:=xImporteEntrega;
+		xDEMORA:=xDEMORA - xImporteEntrega;
+		xImporteEntrega:=0;
+	END IF;
+
+      IF xImporteEntrega >= xCOSTAS THEN
+		xImporteEntrega := xImporteEntrega - xCOSTAS;
+		xCOSTAS_NEW:=xCOSTAS;
+		xCOSTAS:=0;
+	ELSE
+		xCOSTAS_NEW:=xImporteEntrega;
+		xCOSTAS:=xCOSTAS - xImporteEntrega;
+		xImporteEntrega:=0;
+	END IF;
+
+	UPDATE INGRESOS SET PRINCIPAL=xPRINCIPAL_NEW,
+				RECARGO=xRECARGO_NEW,
+				DEMORA=xDEMORA_NEW,
+				COSTAS=xCOSTAS_NEW
+	WHERE CURRENT OF cINGRESOS;
+
+
+END LOOP;
+
+
+FOR v_cINGREVAL IN cINGREVAL LOOP
+
+    SELECT SUM(DEMORA) INTO xDEMORA FROM INGRESOS
+	WHERE VALOR=v_cINGREVAL.VALOR;
+
+    UPDATE VALORES SET DEMORA=xDEMORA
+	WHERE ID=v_cINGREVAL.VALOR;
+
+END LOOP;
+
+
+END;

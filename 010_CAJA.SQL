@@ -1,0 +1,778 @@
+-- -----------------------------------------------------
+-- Euro. Revisado el 30-11-2001. Lucas Fernández Pérez 
+-- No se han realizado cambios.
+-- -----------------------------------------------------
+CREATE OR REPLACE PROCEDURE SETSALDOCAJA(
+        xZONA 		IN	CHAR,
+        xMONEDASE 	IN	CHAR
+)
+AS
+
+	xEB500E 		INT DEFAULT 0;
+	xEB200E 		INT DEFAULT 0;
+	xEB100E 		INT DEFAULT 0;
+	xEB50E  		INT DEFAULT 0;
+	xEB20E  		INT DEFAULT 0;
+	xEB10E  		INT DEFAULT 0;
+	xEB5E   		INT DEFAULT 0;
+	xEM2E   		INT DEFAULT 0;
+	xEM1E   		INT DEFAULT 0;
+	xEM50CENT 		INT DEFAULT 0;
+	xEM20CENT 		INT DEFAULT 0;
+	xEM5CENT 		INT DEFAULT 0;
+	xEM2CENT 		INT DEFAULT 0;
+	xEM1CENT 		INT DEFAULT 0;
+
+	xEB10000P 		INT DEFAULT 0;
+	xEB5000P 		INT DEFAULT 0;
+	xEB2000P 		INT DEFAULT 0;
+	xEB1000P 		INT DEFAULT 0;
+	xEM500P 		INT DEFAULT 0;
+	xEM200P 		INT DEFAULT 0;
+	xEM100P 		INT DEFAULT 0;
+	xEM50P  		INT DEFAULT 0;
+	xEM25P  		INT DEFAULT 0;
+	xEM10P  		INT DEFAULT 0;
+	xEM5P   		INT DEFAULT 0;
+	xEM1P   		INT DEFAULT 0;
+
+	xID 			INT;
+
+
+BEGIN
+
+  xEB500E:=TO_NUMBER( SUBSTR(xMONEDASE, 1 , 3 ) );
+  xEB200E:=TO_NUMBER( SUBSTR(xMONEDASE, 4 , 3 ) );
+  xEB100E:=TO_NUMBER( SUBSTR(xMONEDASE, 7 , 3 ) );
+  xEB50E:=TO_NUMBER( SUBSTR(xMONEDASE, 10 , 3 ) );
+  xEB20E:=TO_NUMBER( SUBSTR(xMONEDASE, 13 , 3 ) );
+  xEB10E:=TO_NUMBER( SUBSTR(xMONEDASE, 16 , 3 ) );
+  xEB5E:=TO_NUMBER( SUBSTR(xMONEDASE, 19 , 3 ) );
+  xEM2E:=TO_NUMBER( SUBSTR(xMONEDASE, 22 , 3 ) );
+  xEM1E:=TO_NUMBER( SUBSTR(xMONEDASE, 25 , 3 ) );
+  xEM50CENT:=TO_NUMBER( SUBSTR(xMONEDASE, 28 , 3 ) );
+  xEM20CENT:=TO_NUMBER( SUBSTR(xMONEDASE, 31 , 3 ) );
+  xEM5CENT:=TO_NUMBER(SUBSTR(xMONEDASE, 34 , 3 ) );
+  xEM2CENT:=TO_NUMBER(SUBSTR(xMONEDASE, 37 , 3 ) );
+  xEM1CENT:=TO_NUMBER(SUBSTR(xMONEDASE, 40 , 3 ) );
+
+  xEB10000P:=TO_NUMBER(SUBSTR(xMONEDASE, 43 , 3 ) );
+  xEB5000P:=TO_NUMBER(SUBSTR(xMONEDASE, 46 , 3 ) );
+  xEB2000P:=TO_NUMBER(SUBSTR(xMONEDASE, 49 , 3 ) );
+  xEB1000P:=TO_NUMBER(SUBSTR(xMONEDASE, 52 , 3 ) );
+  xEM500P:=TO_NUMBER(SUBSTR(xMONEDASE, 55 , 3 ) );
+  xEM200P:=TO_NUMBER(SUBSTR(xMONEDASE, 58 , 3 ) );
+  xEM100P:=TO_NUMBER(SUBSTR(xMONEDASE, 61 , 3 ) );
+  xEM50P:=TO_NUMBER(SUBSTR(xMONEDASE, 64 , 3 ) );
+  xEM25P:=TO_NUMBER(SUBSTR(xMONEDASE, 67 , 3 ) );
+  xEM10P:=TO_NUMBER(SUBSTR(xMONEDASE, 70 , 3 ) );
+  xEM5P:=TO_NUMBER(SUBSTR(xMONEDASE, 73 , 3 ) );
+  xEM1P:=TO_NUMBER(SUBSTR(xMONEDASE, 76 , 3 ) );
+
+  /* pasar a usuarios el TIPO, COMO A AJUSTE */
+  UPDATE USUARIOS SET EMBARGO='A' WHERE USUARIO=USER;
+
+  /* ACTUALIZAR EL SALDO DE LA CAJA */
+
+  UPDATE SALDOCAJA SET B500E=xEB500E, B200E=xEB200E,
+			     B100E=xEB100E, B50E=xEB50E,
+			     B20E=xEB20E, B10E=xEB10E,
+			     B5E=xEB5E, M2E=xEM2E,
+			     M1E=xEM1E, M50CENT=xEM50CENT,
+			     M20CENT=xEM20CENT, M5CENT=xEM5CENT,
+			     M2CENT=xEM2CENT, M1CENT=xEM1CENT,
+			     B10000P=xEB10000P, B5000P=xEB5000P,
+        		     B2000P=xEB2000P, B1000P=xEB1000P,
+        		     M500P=xEM500P, M200P=xEM200P,
+        		     M100P=xEM100P, M50P=xEM50P,
+        		     M25P=xEM25P, M10P=xEM10P,
+        		     M5P=xEM5P, M1P=xEM1P, 
+                       FECHA=SYSDATE
+  WHERE ZONA=xZONA;
+
+END;
+/
+
+
+/********************************************************************/
+
+
+/* xCODOPE VINCULA EL REGISTRO AL CODIGO
+   DE OPERACION DE INGRESOS */
+
+CREATE OR REPLACE PROCEDURE ADDMOVCAJA(
+        xCODOPE 		IN	INT,
+        xZONA 		IN	CHAR,
+        xMONEDASE 	IN	CHAR,
+        xMONEDASC 	IN	CHAR
+)
+AS
+
+xEB500E 		INT DEFAULT 0;
+xEB200E 		INT DEFAULT 0;
+xEB100E 		INT DEFAULT 0;
+xEB50E  		INT DEFAULT 0;
+xEB20E  		INT DEFAULT 0;
+xEB10E  		INT DEFAULT 0;
+xEB5E   		INT DEFAULT 0;
+xEM2E  	 	INT DEFAULT 0;
+xEM1E   		INT DEFAULT 0;
+xEM50CENT         INT DEFAULT 0;
+xEM20CENT         INT DEFAULT 0;
+xEM5CENT          INT DEFAULT 0;
+xEM2CENT          INT DEFAULT 0;
+xEM1CENT          INT DEFAULT 0;
+xEB10000P         INT DEFAULT 0;
+xEB5000P          INT DEFAULT 0;
+xEB2000P          INT DEFAULT 0;
+xEB1000P          INT DEFAULT 0;
+xEM500P 		INT DEFAULT 0;
+xEM200P 		INT DEFAULT 0;
+xEM100P 		INT DEFAULT 0;
+xEM50P  		INT DEFAULT 0;
+xEM25P 		INT DEFAULT 0;
+xEM10P  		INT DEFAULT 0;
+xEM5P	 		INT DEFAULT 0;
+xEM1P   		INT DEFAULT 0;
+
+xCB500E 		INT DEFAULT 0;
+xCB200E 		INT DEFAULT 0;
+xCB100E 		INT DEFAULT 0;
+xCB50E  		INT DEFAULT 0;
+xCB20E 		INT DEFAULT 0;
+xCB10E  		INT DEFAULT 0;
+xCB5E   		INT DEFAULT 0;
+xCM2E   		INT DEFAULT 0;
+xCM1E   		INT DEFAULT 0;
+xCM50CENT       	INT DEFAULT 0;
+xCM20CENT       	INT DEFAULT 0;
+xCM5CENT        	INT DEFAULT 0;
+xCM2CENT        	INT DEFAULT 0;
+xCM1CENT        	INT DEFAULT 0;
+xCB10000P       	INT DEFAULT 0;
+xCB5000P        	INT DEFAULT 0;
+xCB2000P        	INT DEFAULT 0;
+xCB1000P        	INT DEFAULT 0;
+xCM500P  		INT DEFAULT 0;
+xCM200P 		INT DEFAULT 0;
+xCM100P 		INT DEFAULT 0;
+xCM50P  		INT DEFAULT 0;
+xCM25P  		INT DEFAULT 0;
+xCM10P  		INT DEFAULT 0;
+xCM5P   		INT DEFAULT 0;
+xCM1P 		INT DEFAULT 0;
+xID 			INT;
+
+BEGIN
+
+   xEB500E:=TO_NUMBER( SUBSTR(xMONEDASE, 1 , 3 ) );
+   xEB200E:=TO_NUMBER( SUBSTR(xMONEDASE, 4 , 3 ) );
+   xEB100E:=TO_NUMBER( SUBSTR(xMONEDASE, 7 , 3 ) );
+   xEB50E:=TO_NUMBER( SUBSTR(xMONEDASE, 10 , 3 ) );
+   xEB20E:=TO_NUMBER( SUBSTR(xMONEDASE, 13 , 3 ) );
+   xEB10E:=TO_NUMBER( SUBSTR(xMONEDASE, 16 , 3 ) );
+   xEB5E:=TO_NUMBER( SUBSTR(xMONEDASE, 19 , 3 ) );
+   xEM2E:=TO_NUMBER( SUBSTR(xMONEDASE, 22 , 3 ) );
+   xEM1E:=TO_NUMBER( SUBSTR(xMONEDASE, 25 , 3 ) );
+   xEM50CENT:=TO_NUMBER( SUBSTR(xMONEDASE, 28 , 3 ) );
+   xEM20CENT:=TO_NUMBER( SUBSTR(xMONEDASE, 31 , 3 ) );
+   xEM5CENT:=TO_NUMBER(SUBSTR(xMONEDASE, 34 , 3 ) );
+   xEM2CENT:=TO_NUMBER(SUBSTR(xMONEDASE, 37 , 3 ) );
+   xEM1CENT:=TO_NUMBER(SUBSTR(xMONEDASE, 40 , 3 ) ); 
+   xEB10000P:=TO_NUMBER(SUBSTR(xMONEDASE, 43 , 3 ) );
+   xEB5000P:=TO_NUMBER(SUBSTR(xMONEDASE, 46 , 3 ) );
+   xEB2000P:=TO_NUMBER(SUBSTR(xMONEDASE, 49 , 3 ) );
+   xEB1000P:=TO_NUMBER(SUBSTR(xMONEDASE, 52 , 3 ) );
+   xEM500P:=TO_NUMBER(SUBSTR(xMONEDASE, 55 , 3 ) );
+   xEM200P:=TO_NUMBER(SUBSTR(xMONEDASE, 58 , 3 ) );
+   xEM100P:=TO_NUMBER(SUBSTR(xMONEDASE, 61 , 3 ) );
+   xEM50P:=TO_NUMBER(SUBSTR(xMONEDASE, 64 , 3 ) );
+   xEM25P:=TO_NUMBER(SUBSTR(xMONEDASE, 67 , 3 ) );
+   xEM10P:=TO_NUMBER(SUBSTR(xMONEDASE, 70 , 3 ) );
+   xEM5P:=TO_NUMBER(SUBSTR(xMONEDASE, 73 , 3 ) );
+   xEM1P:=TO_NUMBER(SUBSTR(xMONEDASE, 76 , 3 ) );
+
+   xCB500E:=TO_NUMBER(SUBSTR(xMONEDASC, 1 , 3 ) );
+   xCB200E:=TO_NUMBER(SUBSTR(xMONEDASC, 4 , 3 ) );
+   xCB100E:=TO_NUMBER(SUBSTR(xMONEDASC, 7 , 3 ) );
+   xCB50E:=TO_NUMBER(SUBSTR(xMONEDASC, 10 , 3 ) );
+   xCB20E:=TO_NUMBER(SUBSTR(xMONEDASC, 13 , 3 ) );
+   xCB10E:=TO_NUMBER(SUBSTR(xMONEDASC, 16 , 3 ) );
+   xCB5E:=TO_NUMBER(SUBSTR(xMONEDASC, 19 , 3 ) );
+   xCM2E:=TO_NUMBER(SUBSTR(xMONEDASC, 22 , 3 ) );
+   xCM1E:=TO_NUMBER(SUBSTR(xMONEDASC, 25 , 3 ) );
+   xCM50CENT:=TO_NUMBER(SUBSTR(xMONEDASC, 28 , 3 ) );
+   xCM20CENT:=TO_NUMBER(SUBSTR(xMONEDASC, 31 , 3 ) );
+   xCM5CENT:=TO_NUMBER(SUBSTR(xMONEDASC, 34 , 3 ) );
+   xCM2CENT:=TO_NUMBER(SUBSTR(xMONEDASC, 37 , 3 ) );
+   xCM1CENT:=TO_NUMBER(SUBSTR(xMONEDASC, 40 , 3 ) );
+   xCB10000P:=TO_NUMBER(SUBSTR(xMONEDASC, 43 , 3 ) );
+   xCB5000P:=TO_NUMBER(SUBSTR(xMONEDASC, 46 , 3 ) );
+   xCB2000P:=TO_NUMBER(SUBSTR(xMONEDASC, 49 , 3 ) );
+   xCB1000P:=TO_NUMBER(SUBSTR(xMONEDASC, 52 , 3 ) );
+   xCM500P:=TO_NUMBER(SUBSTR(xMONEDASC, 55 , 3 ) );
+   xCM200P:=TO_NUMBER(SUBSTR(xMONEDASC, 58, 3 ) );
+   xCM100P:=TO_NUMBER(SUBSTR(xMONEDASC, 61 , 3 ) );
+   xCM50P:=TO_NUMBER(SUBSTR(xMONEDASC, 64 , 3 ) );
+   xCM25P:=TO_NUMBER(SUBSTR(xMONEDASC, 67 , 3 ) );
+   xCM10P:=TO_NUMBER(SUBSTR(xMONEDASC, 70 , 3 ) );
+   xCM5P:=TO_NUMBER(SUBSTR(xMONEDASC, 73 , 3 ) );
+   xCM1P:=TO_NUMBER(SUBSTR(xMONEDASC, 76 , 3 ) );
+
+   /* pasar a usuarios el codigo de operacion */
+   UPDATE USUARIOS SET CODIGO_OPERACION=xCodOpe, EMBARGO='I'
+   WHERE USUARIO=USER;
+
+   INSERT INTO ENTRACAJA
+      (CODOPE,FECHA,EB500E,EB200E,EB100E,EB50E,EB20E,EB10E,
+       EB5E,EM2E,EM1E,EM50CENT,EM20CENT,
+       EM5CENT,EM2CENT,EM1CENT,EB10000P,EB5000P,
+       EB2000P,EB1000P,EM500P,EM200P,EM100P,EM50P,
+       EM25P,EM10P,EM5P,EM1P,
+       CB500E,CB200E,CB100E,CB50E,CB20E,CB10E,CB5E,CM2E,
+       CM1E,CM50CENT,CM20CENT,CM5CENT,CM2CENT,CM1CENT,
+       CB10000P,CB5000P,CB2000P,CB1000P,CM500P,CM200P,
+       CM100P,CM50P,CM25P,CM10P,CM5P,CM1P,ZONA)
+   VALUES 
+      (xCODOPE, SYSDATE, xEB500E,xEB200E,xEB100E,
+       xEB50E,xEB20E,xEB10E,
+       xEB5E,xEM2E,xEM1E,xEM50CENT,xEM20CENT,
+       xEM5CENT,xEM2CENT,xEM1CENT,xEB10000P,xEB5000P,
+       xEB2000P,xEB1000P,xEM500P,xEM200P,xEM100P,xEM50P,
+       xEM25P,xEM10P,xEM5P,xEM1P,
+       xCB500E,xCB200E,xCB100E,xCB50E,xCB20E,xCB10E,
+       xCB5E,xCM2E,xCM1E,xCM50CENT,xCM20CENT,xCM5CENT,
+       xCM2CENT,xCM1CENT,xCB10000P,xCB5000P,xCB2000P,
+       xCB1000P,xCM500P,xCM200P,xCM100P,xCM50P,xCM25P,
+       xCM10P,xCM5P,xCM1P,xZONA);
+
+   /* ACTUALIZAR EL SALDO DE LA CAJA */
+   /* ENTRADAS MENOS CAMBIO */
+
+   UPDATE SALDOCAJA SET B500E=B500E+xEB500E-xCB500E,
+                        B200E=B200E+xEB200E-xCB200E,
+        			B100E=B100E+xEB100E-xCB100E,
+        			B50E=B50E+xEB50E-xCB50E,
+        			B20E=B20E+xEB20E-xCB20E,
+        			B10E=B10E+xEB10E-xCB10E,
+        			B5E=B5E+xEB5E-xCB5E,
+ 			      M2E=M2E+xEM2E-xCM2E,
+        			M1E=M1E+xEM1E-xCM1E,
+        			M50CENT=M50CENT+xEM50CENT-xCM50CENT,
+        			M20CENT=M20CENT+xEM20CENT-xCM20CENT,
+        			M5CENT=M5CENT+xEM5CENT-xCM5CENT,
+        			M2CENT=M2CENT+xEM2CENT-xCM2CENT,
+        			M1CENT=M1CENT+xEM1CENT-xCM1CENT,
+        			B10000P=B10000P+xEB10000P,
+        			B5000P=B5000P+xEB5000P,
+        			B2000P=B2000P+xEB2000P,
+        			B1000P=B1000P+xEB1000P,
+        			M500P=M500P+xEM500P,
+        			M200P=M200P+xEM200P,
+        			M100P=M100P+xEM100P,
+        			M50P=M50P+xEM50P,
+        			M25P=M25P+xEM25P,
+        			M10P=M10P+xEM10P,
+        			M5P=M5P+xEM5P,
+        			M1P=M1P+xEM1P, 
+				FECHA=SYSDATE
+   WHERE ZONA=xZONA;
+
+END;
+/
+
+
+/********************************************************************/
+
+
+CREATE OR REPLACE PROCEDURE GRABAR_CAJA(
+         xFECHA      	IN	 DATE,
+         xDESCRIPCION   IN	 VARCHAR,
+         xDH            IN	 CHAR,
+         xB10000P       IN	 INTEGER,
+         xB5000P        IN	 INTEGER,
+         xB2000P        IN	 INTEGER,
+         xB1000P        IN	 INTEGER,
+         xM500P         IN	 INTEGER,
+         xM200P         IN	 INTEGER,
+         xM100P         IN	 INTEGER,
+         xM50P          IN	 INTEGER,
+         xM25P          IN	 INTEGER,
+         xM10P          IN	 INTEGER,
+         xM5P           IN	 INTEGER,
+         xM1P           IN	 INTEGER,
+	   xB500E		IN	 INTEGER,
+	   xB200E		IN	 INTEGER,
+	   xB100E		IN	 INTEGER,
+         xB50E		IN	 INTEGER,
+	   xB20E		IN	 INTEGER,
+	   xB10E		IN	 INTEGER,
+	   xB5E		IN	 INTEGER,
+	   xM2E		IN	 INTEGER,
+	   xM1E		IN	 INTEGER,
+	   xM50C		IN	 INTEGER,
+	   xM20C		IN	 INTEGER,
+	   xM5C		IN	 INTEGER,
+	   xM2C		IN	 INTEGER,
+	   xM1C		IN	 INTEGER
+)
+AS
+
+   xZONA CHAR(2);
+
+BEGIN
+
+  SELECT ZONA INTO xZONA FROM USUARIOS
+  WHERE USUARIO=USER;
+
+  INSERT INTO CAJAMOV
+     (ZONA, FECHA, EXPLICA,
+      DH, B10000P, B5000P, B2000P, B1000P,
+      M500P, M200P, M100P, M50P, M25P, M10P, M5P, M1P,
+	B500E, B200E, B100E, B50E, B20E, B10E, B5E,
+	M2E, M1E, M50CENT, M20CENT, M5CENT, M2CENT, M1CENT)
+  VALUES
+     ( xZONA, xFECHA, xDESCRIPCION,
+      xDH, xB10000P, xB5000P, xB2000P, xB1000P,
+      xM500P, xM200P, xM100P, xM50P, xM25P, xM10P, xM5P, xM1P,
+	xB500E, xB200E, xB100E, xB50E, xB20E, xB10E, xB5E,
+	xM2E, xM1E, xM50C, xM20C, xM5C, xM2C, xM1C);
+
+  /* actualizar en saldo caja */
+
+  IF xDH='E' THEN
+
+     UPDATE SALDOCAJA SET FECHA=xFECHA, 
+                          B10000P=B10000P+xB10000P,
+                          B5000P=B5000P+xB5000P, 
+                          B2000P=B2000P+xB2000P,
+                          B1000P=B1000P+xB1000P, 
+                          M500P=M500P+xM500P,
+                          M200P=M200P+xM200P, 
+                          M100P=M100P+xM100P, 
+                          M50P=M50P+xM50P,
+                          M25P=M25P+xM25P, 
+                          M10P=M10P+xM10P, 
+                          M5P=M5P+xM5P,
+                          M1P=M1P+xM1P,
+				  B500E=B500E+xB500E,
+				  B200E=B200E+xB200E,
+				  B100E=B100E+xB100E,
+				  B50E=B50E+xB50E,
+				  B20E=B20E+xB20E,
+				  B10E=B10E+xB10E,
+				  B5E=B5E+xB5E,
+				  M2E=M2E+xM2E,
+				  M1E=M1E+xM1E,
+				  M50CENT=M50CENT+xM50C,
+				  M20CENT=M20CENT+xM20C,
+				  M5CENT=M5CENT+xM5C,
+				  M2CENT=M2CENT+xM2C,
+				  M1CENT=M1CENT+xM1C
+     WHERE ZONA=xZona;
+
+  ELSE
+
+     UPDATE SALDOCAJA SET FECHA=xFECHA, 
+                          B10000P=B10000P-xB10000P,
+                          B5000P=B5000P-xB5000P, 
+                          B2000P=B2000P-xB2000P,
+                          B1000P=B1000P-xB1000P, 
+                          M500P=M500P-xM500P,
+                          M200P=M200P-xM200P, 
+                          M100P=M100P-xM100P, 
+                          M50P=M50P-xM50P,
+                          M25P=M25P-xM25P, 
+                          M10P=M10P-xM10P, 
+                          M5P=M5P-xM5P,
+                          M1P=M1P-xM1P,
+				  B500E=B500E-xB500E,
+				  B200E=B200E-xB200E,
+				  B100E=B100E-xB100E,
+				  B50E=B50E-xB50E,
+				  B20E=B20E-xB20E,
+				  B10E=B10E-xB10E,
+				  B5E=B5E-xB5E,
+				  M2E=M2E-xM2E,
+				  M1E=M1E-xM1E,
+				  M50CENT=M50CENT-xM50C,
+				  M20CENT=M20CENT-xM20C,
+				  M5CENT=M5CENT-xM5C,
+				  M2CENT=M2CENT-xM2C,
+				  M1CENT=M1CENT-xM1C
+ 
+     WHERE ZONA=xZona;
+
+  END IF;
+
+END;
+/
+
+/********************************************************************/
+
+CREATE OR REPLACE PROCEDURE MODIFICAR_CAJA(
+	   xID		IN	 INTEGER,
+         xFECHA      	IN	 DATE,
+         xDESCRIPCION   IN	 VARCHAR,
+         xDH            IN	 CHAR,
+         xB10000P       IN	 INTEGER,
+         xB5000P        IN	 INTEGER,
+         xB2000P        IN	 INTEGER,
+         xB1000P        IN	 INTEGER,
+         xM500P         IN	 INTEGER,
+         xM200P         IN	 INTEGER,
+         xM100P         IN	 INTEGER,
+         xM50P          IN	 INTEGER,
+         xM25P          IN	 INTEGER,
+         xM10P          IN	 INTEGER,
+         xM5P           IN	 INTEGER,
+         xM1P           IN	 INTEGER,
+	   xB500E		IN	 INTEGER,
+	   xB200E		IN	 INTEGER,
+	   xB100E		IN	 INTEGER,
+         xB50E		IN	 INTEGER,
+	   xB20E		IN	 INTEGER,
+	   xB10E		IN	 INTEGER,
+	   xB5E		IN	 INTEGER,
+	   xM2E		IN	 INTEGER,
+	   xM1E		IN	 INTEGER,
+	   xM50C		IN	 INTEGER,
+	   xM20C		IN	 INTEGER,
+	   xM5C		IN	 INTEGER,
+	   xM2C		IN	 INTEGER,
+	   xM1C		IN	 INTEGER
+	   
+)
+AS
+	xZONA		CHAR(2);
+	mDH		CHAR(1);
+	mB10000P	INTEGER;
+	mB5000P	INTEGER;
+	mB2000P	INTEGER;
+	mB1000P	INTEGER;
+	mM500P	INTEGER;
+	mM200P	INTEGER;
+	mM100P	INTEGER;
+	mM50P		INTEGER;
+	mM25P		INTEGER;
+	mM10P		INTEGER;
+	mM5P		INTEGER;
+	mM1P		INTEGER;
+	mB500E	INTEGER;
+	mB200E	INTEGER;
+	mB100E	INTEGER;
+	mB50E		INTEGER;
+	mB20E		INTEGER;
+	mB10E		INTEGER;
+	mB5E		INTEGER;
+	mM2E		INTEGER;
+	mM1E		INTEGER;
+	mM50C		INTEGER;
+	mM20C		INTEGER;
+	mM5C		INTEGER;
+	mM2C		INTEGER;
+	mM1C		INTEGER;
+	FaltaSaldo  EXCEPTION;
+BEGIN  
+
+   SELECT ZONA INTO xZONA FROM USUARIOS
+   WHERE USUARIO=USER;
+
+   /* recogemos los datos antiguos del movimiento que se va a modificar */
+
+   SELECT DH,B10000P,B5000P,B2000P,B1000P,M500P,M200P,M100P,M50P,M25P,M10P,M5P,M1P,
+	    B500E,B200E,B100E,B50E,B20E,B10E,B5E,M2E,M1E,M50CENT,M20CENT,M5CENT,M2CENT,M1CENT
+   INTO mDH,mB10000P,mB5000P,mB2000P,mB1000P,mM500P,mM200P,mM100P,mM50P,mM25P,mM10P,mM5P,mM1P,
+	  mB500E,mB200E,mB100E,mB50E,mB20E,mB10E,mB5E,mM2E,mM1E,mM50C,mM20C,mM5C,mM2C,mM1C
+   FROM CAJAMOV
+   WHERE ID=xID;
+
+   /* dejamos el saldo de la caja como estaba antes de la operación */
+
+   IF mDH='E' THEN
+      UPDATE SALDOCAJA SET B10000P=B10000P-mB10000P,
+                           B5000P=B5000P-mB5000P, 
+                           B2000P=B2000P-mB2000P,
+                           B1000P=B1000P-mB1000P, 
+                           M500P=M500P-mM500P,
+                           M200P=M200P-mM200P, 
+                           M100P=M100P-mM100P, 
+                           M50P=M50P-mM50P,
+                           M25P=M25P-mM25P, 
+                           M10P=M10P-mM10P, 
+                           M5P=M5P-mM5P,
+                           M1P=M1P-mM1P,
+				   B500E=B500E-mB500E,
+				   B200E=B200E-mB200E,
+				   B100E=B100E-mB100E,
+				   B50E=B50E-mB50E,
+				   B20E=B20E-mB20E,
+				   B10E=B10E-mB10E,
+				   B5E=B5E-mB5E,
+				   M2E=M2E-mM2E,
+				   M1E=M1E-mM1E,
+				   M50CENT=M50CENT-mM50C,
+				   M20CENT=M20CENT-mM20C,
+				   M5CENT=M5CENT-mM5C,
+				   M2CENT=M2CENT-mM2C,
+				   M1CENT=M1CENT-mM1C
+      WHERE ZONA=xZona;
+   ELSE
+      UPDATE SALDOCAJA SET B10000P=B10000P+mB10000P,
+                          B5000P=B5000P+mB5000P, 
+                          B2000P=B2000P+mB2000P,
+                          B1000P=B1000P+mB1000P, 
+                          M500P=M500P+mM500P,
+                          M200P=M200P+mM200P, 
+                          M100P=M100P+mM100P, 
+                          M50P=M50P+mM50P,
+                          M25P=M25P+mM25P, 
+                          M10P=M10P+mM10P, 
+                          M5P=M5P+mM5P,
+                          M1P=M1P+mM1P,
+			        B500E=B500E+mB500E,
+				  B200E=B200E+mB200E,
+				  B100E=B100E+mB100E,
+				  B50E=B50E+mB50E,
+				  B20E=B20E+mB20E,
+				  B10E=B10E+mB10E,
+				  B5E=B5E+mB5E,
+				  M2E=M2E+mM2E,
+				  M1E=M1E+mM1E,
+				  M50CENT=M50CENT+mM50C,
+				  M20CENT=M20CENT+mM20C,
+				  M5CENT=M5CENT+mM5C,
+				  M2CENT=M2CENT+mM2C,
+				  M1CENT=M1CENT+mM1C
+      WHERE ZONA=xZona;
+
+   END IF;
+
+   /* obtenemos el saldo actual de la caja */
+
+   SELECT B10000P,B5000P,B2000P,B1000P,M500P,M200P,M100P,M50P,M25P,M10P,M5P,M1P,
+	    B500E,B200E,B100E,B50E,B20E,B10E,B5E,
+	    M2E,M1E,M50CENT,M20CENT,M5CENT,M2CENT,M1CENT
+   INTO mB10000P,mB5000P,mB2000P,mB1000P,mM500P,mM200P,mM100P,mM50P,mM25P,mM10P,mM5P,mM1P,
+          mB500E,mB200E,mB100E,mB50E,mB20E,mB10E,mB5E,
+	    mM2E,mM1E,mM50C,mM20C,mM5C,mM2C,mM1C	
+   FROM SALDOCAJA WHERE ZONA=xZONA;
+
+   /* si la nueva operación es una salida comprobamos si hay saldo suficiente */
+   IF xDH='S' THEN
+      IF (mB10000P<xB10000P) THEN	
+	   RAISE FaltaSaldo;	   
+	END IF;
+
+      IF (mB5000P<xB5000P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mB2000P<xB2000P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mB2000P<xB2000P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mB1000P<xB1000P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mM500P<xM500P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mM200P<xM200P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mM100P<xM100P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mM50P<xM50P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mM25P<xM25P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mM10P<xM10P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mM5P<xM5P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+      IF (mM1P<xM1P) THEN	
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mB500E<xB500E) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mB200E<xB200E) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mB100E<xB100E) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mB50E<xB50E) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mB20E<xB20E) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mB10E<xB10E) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mB5E<xB5E) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mM2E<xM2E) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mM1E<xM1E) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mM50C<xM50C) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mM20C<xM20C) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mM5C<xM5C) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mM2C<xM2C) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+	IF (mM1C<xM1C) THEN
+	   RAISE FaltaSaldo;
+	END IF;
+
+   END IF;
+
+   /* modificamos el movimientos con los nuevos datos */   
+
+   UPDATE CAJAMOV SET FECHA=xFECHA,
+			    DH=xDH,	
+			    EXPLICA=xDESCRIPCION,
+			    B10000P=xB10000P,
+			    B5000P=xB5000P,
+			    B2000P=xB2000P,
+			    B1000P=xB1000P,
+			    M500P=xM500P,
+			    M200P=xM200P,
+			    M100P=xM100P,
+			    M50P=xM50P,
+			    M25P=xM25P,
+			    M10P=xM10P,
+			    M5P=xM5P,
+			    M1P=xM1P,
+			    B500E=xB500E,
+			    B200E=xB200E,
+			    B100E=xB100E,
+			    B50E=xB50E,
+			    B20E=xB20E,
+			    B10E=xB10E,
+			    B5E=xB5E,
+			    M2E=xM2E,
+			    M1E=xM1E,
+			    M50CENT=xM50C,
+			    M20CENT=xM20C,
+			    M5CENT=xM5C,
+			    M2CENT=xM2C,
+			    M1CENT=xM1C
+   WHERE ID=xID;
+
+  /* actualizar en saldo caja */
+
+  IF xDH='E' THEN
+
+     UPDATE SALDOCAJA SET FECHA=xFECHA, 
+                          B10000P=B10000P+xB10000P,
+                          B5000P=B5000P+xB5000P, 
+                          B2000P=B2000P+xB2000P,
+                          B1000P=B1000P+xB1000P, 
+                          M500P=M500P+xM500P,
+                          M200P=M200P+xM200P, 
+                          M100P=M100P+xM100P, 
+                          M50P=M50P+xM50P,
+                          M25P=M25P+xM25P, 
+                          M10P=M10P+xM10P, 
+                          M5P=M5P+xM5P,
+                          M1P=M1P+xM1P,
+			        B500E=B500E+xB500E,
+				  B200E=B200E+xB200E,
+				  B100E=B100E+xB100E,
+				  B50E=B50E+xB50E,
+				  B20E=B20E+xB20E,
+				  B10E=B10E+xB10E,
+				  B5E=B5E+xB5E,
+				  M2E=M2E+xM2E,
+				  M1E=M1E+xM1E,
+				  M50CENT=M50CENT+xM50C,
+				  M20CENT=M20CENT+xM20C,
+				  M5CENT=M5CENT+xM5C,
+				  M2CENT=M2CENT+xM2C,
+				  M1CENT=M1CENT+xM1C
+
+     WHERE ZONA=xZona;
+
+  ELSE
+
+     UPDATE SALDOCAJA SET FECHA=xFECHA, 
+                          B10000P=B10000P-xB10000P,
+                          B5000P=B5000P-xB5000P, 
+                          B2000P=B2000P-xB2000P,
+                          B1000P=B1000P-xB1000P, 
+                          M500P=M500P-xM500P,
+                          M200P=M200P-xM200P, 
+                          M100P=M100P-xM100P, 
+                          M50P=M50P-xM50P,
+                          M25P=M25P-xM25P, 
+                          M10P=M10P-xM10P, 
+                          M5P=M5P-xM5P,
+                          M1P=M1P-xM1P,
+			        B500E=B500E-xB500E,
+				  B200E=B200E-xB200E,
+				  B100E=B100E-xB100E,
+				  B50E=B50E-xB50E,
+				  B20E=B20E-xB20E,
+				  B10E=B10E-xB10E,
+				  B5E=B5E-xB5E,
+				  M2E=M2E-xM2E,
+				  M1E=M1E-xM1E,
+				  M50CENT=M50CENT-xM50C,
+				  M20CENT=M20CENT-xM20C,
+				  M5CENT=M5CENT-xM5C,
+				  M2CENT=M2CENT-xM2C,
+				  M1CENT=M1CENT-xM1C
+     WHERE ZONA=xZona;
+
+  END IF;
+
+END;
+/
+
+/********************************************************************/
+COMMIT;
+/********************************************************************/
